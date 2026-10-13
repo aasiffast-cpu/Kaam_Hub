@@ -93,7 +93,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           targetRoute = AppRoutes.customerHome;
           break;
         case UserRole.worker:
-          targetRoute = AppRoutes.workerDashboard;
+          targetRoute = AppRoutes.workerDocumentUpload;
           break;
         case UserRole.admin:
           targetRoute = AppRoutes.adminDashboard;

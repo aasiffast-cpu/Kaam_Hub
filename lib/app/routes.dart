@@ -10,8 +10,11 @@ import '../features/auth/role_selection_screen.dart';
 import '../features/auth/sign_up_screen.dart';
 import '../features/customer/customer_home_placeholder.dart';
 import '../features/customer/select_location_screen.dart';
+import '../features/customer/worker_profile_screen.dart';
 import '../features/worker/worker_dashboard_placeholder.dart';
+import '../features/worker/worker_document_upload_screen.dart';
 import '../models/user_role.dart';
+import '../models/worker_model.dart';
 import '../services/auth_notifier.dart';
 
 /// Centralized named route identifiers and route generator for KaamHub.
@@ -26,6 +29,8 @@ class AppRoutes {
   static const String otpVerification = '/verify_otp';
   static const String customerHome = '/customer/home';
   static const String workerDashboard = '/worker/dashboard';
+  static const String workerDocumentUpload = '/worker/upload_documents';
+  static const String workerProfile = '/worker_profile';
   static const String adminDashboard = '/admin/dashboard';
   static const String profile = '/profile';
   static const String mapLocation = '/map_location';
@@ -83,6 +88,31 @@ class AppRoutes {
       case workerDashboard:
         return MaterialPageRoute(
           builder: (_) => WorkerDashboardScreen(authNotifier: authNotifier),
+          settings: settings,
+        );
+
+      case workerDocumentUpload:
+        return MaterialPageRoute(
+          builder: (_) => WorkerDocumentUploadScreen(
+            authNotifier: authNotifier,
+            existingWorker: settings.arguments is WorkerModel
+                ? settings.arguments as WorkerModel
+                : null,
+          ),
+          settings: settings,
+        );
+
+      case workerProfile:
+        WorkerModel? worker;
+        String? workerId;
+        if (settings.arguments is WorkerModel) {
+          worker = settings.arguments as WorkerModel;
+        } else if (settings.arguments is String) {
+          workerId = settings.arguments as String;
+        }
+        return MaterialPageRoute(
+          builder: (_) =>
+              WorkerProfileScreen(initialWorker: worker, workerId: workerId),
           settings: settings,
         );
 

@@ -1,7 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kaamhub/app/app.dart';
 import 'package:kaamhub/core/constants/app_strings.dart';
+import 'package:kaamhub/features/customer/worker_profile_screen.dart';
+import 'package:kaamhub/features/worker/worker_document_upload_screen.dart';
 import 'package:kaamhub/models/user_role.dart';
+import 'package:kaamhub/models/worker_model.dart';
 import 'package:kaamhub/services/auth_notifier.dart';
 import 'package:kaamhub/services/mock_auth_service.dart';
 
@@ -57,6 +61,8 @@ void main() {
 
     // Verify Accept Job button is present and tap it
     expect(find.text('Accept Job'), findsOneWidget);
+    await tester.ensureVisible(find.text('Accept Job'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Accept Job'));
     await tester.pumpAndSettle();
 
@@ -65,4 +71,88 @@ void main() {
     expect(find.text('3'), findsOneWidget);
     expect(find.text('Mark Completed'), findsOneWidget);
   });
+
+  testWidgets(
+    'Compulsory Document Upload screen: all 4 requirements are enforced',
+    (WidgetTester tester) async {
+      final mockAuth = MockAuthService();
+      await mockAuth.signInWithDemoAccount(UserRole.worker);
+      final authNotifier = AuthNotifier(authService: mockAuth);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WorkerDocumentUploadScreen(authNotifier: authNotifier),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 1. Verify title and progress
+      expect(find.text('Mandatory Document Upload'), findsOneWidget);
+      expect(find.text('Verification Progress'), findsOneWidget);
+
+      // 2. Verify all 4 compulsory requirements are present
+      expect(find.textContaining('1. Profile Photo'), findsOneWidget);
+      expect(find.textContaining('2. CNIC Front Side'), findsOneWidget);
+      expect(find.textContaining('3. CNIC Back Side'), findsOneWidget);
+      expect(
+        find.textContaining('4. Police Clearance Certificate'),
+        findsOneWidget,
+      );
+
+      // 3. Attempt submitting without documents triggers compulsory validation
+      final submitButton = find.textContaining('Submit Documents');
+      expect(submitButton, findsOneWidget);
+      await tester.ensureVisible(submitButton);
+      await tester.pumpAndSettle();
+      await tester.tap(submitButton);
+      await tester.pumpAndSettle();
+
+      // Verify mandatory validation message displays
+      expect(find.textContaining('mandatory'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Individual Worker Profile screen displays verified badges and booking CTA',
+    (WidgetTester tester) async {
+      final testWorker = WorkerModel(
+        id: 'test_worker_1',
+        userId: 'test_uid_1',
+        displayName: 'Rashid Ali Ustad',
+        phoneNumber: '+92 300 7654321',
+        profileImageUrl: '',
+        serviceCategory: 'Electrician',
+        city: 'Sahiwal',
+        serviceAreas: const ['Farid Town', 'Civil Lines'],
+        experienceYears: 6,
+        startingRate: 800,
+        verificationStatus: WorkerVerificationStatus.approved,
+        averageRating: 4.9,
+        reviewCount: 38,
+        completedJobsCount: 84,
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(home: WorkerProfileScreen(initialWorker: testWorker)),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify worker details rendered
+      expect(find.text('Rashid Ali Ustad'), findsWidgets);
+      expect(find.textContaining('Electrician'), findsWidgets);
+      expect(find.textContaining('6 Years Experience'), findsOneWidget);
+      expect(find.textContaining('Sahiwal'), findsWidgets);
+
+      // Verify verified trust badges
+      expect(find.text('✓ NADRA CNIC Verified'), findsOneWidget);
+      expect(find.text('✓ Punjab Police Cleared'), findsOneWidget);
+
+      // Verify rates and booking CTA
+      expect(find.text('Rs. 800'), findsOneWidget);
+      expect(find.text('Book Service Now'), findsOneWidget);
+      expect(find.text('Call'), findsOneWidget);
+    },
+  );
 }

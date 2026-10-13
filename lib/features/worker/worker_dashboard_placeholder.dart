@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../models/worker_model.dart';
 import '../../services/auth_notifier.dart';
+import '../../services/mock_worker_service.dart';
 
-/// Worker dashboard shell representing Stage 2 navigation & interactive job acceptance.
+/// Worker dashboard screen with verification status tracking and interactive job handling.
 class WorkerDashboardScreen extends StatefulWidget {
   final AuthNotifier? authNotifier;
 
@@ -16,6 +18,9 @@ class WorkerDashboardScreen extends StatefulWidget {
 }
 
 class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
+  final MockWorkerService _workerService = MockWorkerService();
+  WorkerModel? _worker;
+
   bool _isAvailable = true;
   int _activeJobs = 2;
   int _completedJobs = 18;
@@ -23,6 +28,28 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
   // Interactive sample request state
   String _jobStatus =
       'pending'; // 'pending', 'accepted', 'completed', 'declined'
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkerData();
+  }
+
+  void _loadWorkerData() async {
+    final user = widget.authNotifier?.currentUser;
+    WorkerModel? worker;
+    if (user != null) {
+      worker = await _workerService.getWorkerByUserId(user.uid);
+    }
+    // Fallback to default demo worker
+    worker ??= await _workerService.getWorkerById('w_sahiwal_01');
+
+    if (mounted) {
+      setState(() {
+        _worker = worker;
+      });
+    }
+  }
 
   void _acceptJob() {
     setState(() {
@@ -75,6 +102,12 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = widget.authNotifier?.currentUser;
+    final worker = _worker;
+    final isPendingVerification =
+        worker?.verificationStatus == WorkerVerificationStatus.pending;
+    final isApproved =
+        worker?.verificationStatus == WorkerVerificationStatus.approved;
+    final hasCompleteDocs = worker?.hasCompleteDocuments ?? false;
 
     return Scaffold(
       appBar: AppBar(
@@ -82,12 +115,17 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              user != null ? '${user.name} (Worker)' : 'Worker Dashboard',
+              user != null
+                  ? '${user.name} (Worker)'
+                  : (worker?.displayName ?? 'Worker Dashboard'),
               style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
             ),
-            const Text(
-              'Electrician • Lahore',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            Text(
+              '${worker?.serviceCategory ?? 'Electrician'} • ${worker?.city ?? 'Lahore'}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -128,49 +166,257 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Verification Notice Banner
-            Container(
-              padding: const EdgeInsets.all(AppConstants.spaceM),
-              decoration: BoxDecoration(
-                color: AppColors.badgePendingBg,
-                borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                border: Border.all(
-                  color: AppColors.badgePendingText.withAlpha(50),
-                ),
-              ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.pending_actions_rounded,
-                    color: AppColors.badgePendingText,
+            if (isPendingVerification) ...[
+              Container(
+                padding: const EdgeInsets.all(AppConstants.spaceM),
+                decoration: BoxDecoration(
+                  color: AppColors.badgePendingBg,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  border: Border.all(
+                    color: AppColors.badgePendingText.withAlpha(50),
                   ),
-                  SizedBox(width: AppConstants.spaceM),
-                  Expanded(
-                    child: Column(
+                ),
+                child: Column(
+                  children: [
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Verification: Pending Admin Review',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.badgePendingText,
-                          ),
+                        const Icon(
+                          Icons.pending_actions_rounded,
+                          color: AppColors.badgePendingText,
+                          size: 26,
                         ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Your CNIC & credentials are being reviewed by the safety team.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.badgePendingText,
+                        const SizedBox(width: AppConstants.spaceM),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Verification: Pending Admin Review',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.badgePendingText,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                hasCompleteDocs
+                                    ? 'All 4 documents (Profile Photo, CNIC Front/Back, Police Clearance) are submitted and under review by KaamHub safety team.'
+                                    : 'Please complete your document submission to expedite account activation.',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.badgePendingText,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.workerDocumentUpload,
+                              arguments: worker,
+                            );
+                          },
+                          icon: const Icon(Icons.upload_file_rounded, size: 16),
+                          label: Text(
+                            hasCompleteDocs
+                                ? 'View Uploaded Documents'
+                                : 'Upload Compulsory Documents',
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.badgePendingText,
+                            side: const BorderSide(
+                              color: AppColors.badgePendingText,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
+            ] else if (isApproved) ...[
+              Container(
+                padding: const EdgeInsets.all(AppConstants.spaceM),
+                decoration: BoxDecoration(
+                  color: AppColors.badgeApprovedBg,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  border: Border.all(color: AppColors.success.withAlpha(50)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.verified_user_rounded,
+                      color: AppColors.badgeApprovedText,
+                      size: 28,
+                    ),
+                    const SizedBox(width: AppConstants.spaceM),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '✓ Profile Verified & Police Cleared',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.badgeApprovedText,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Your profile is live across the corridor! You can receive direct customer booking requests.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.badgeApprovedText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        if (worker != null) {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.workerProfile,
+                            arguments: worker,
+                          );
+                        }
+                      },
+                      child: const Text('View Profile'),
+                    ),
+                  ],
+                ),
+              ),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.all(AppConstants.spaceM),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withAlpha(20),
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  border: Border.all(color: AppColors.error.withAlpha(60)),
+                ),
+                child: Column(
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: AppColors.error,
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Compulsory Documents Missing',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'You must upload your Profile Photo, CNIC Front, CNIC Back, and Police Clearance Certificate before your profile can be approved.',
+                      style: TextStyle(fontSize: 12, color: AppColors.error),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.workerDocumentUpload,
+                          arguments: worker,
+                        );
+                      },
+                      icon: const Icon(Icons.cloud_upload_rounded),
+                      label: const Text('Upload All 4 Documents Now'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: AppConstants.spaceL),
+
+            // Public Profile Preview CTA
+            if (worker != null) ...[
+              InkWell(
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.workerProfile,
+                    arguments: worker,
+                  );
+                },
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                child: Container(
+                  padding: const EdgeInsets.all(AppConstants.spaceM),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.visibility_rounded,
+                          color: AppColors.secondary,
+                        ),
+                      ),
+                      const SizedBox(width: AppConstants.spaceM),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Preview My Public Profile',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              'See how customers view your rates, photos, and badges',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppConstants.spaceL),
+            ],
 
             // Performance Metric Counters
             Row(
@@ -193,10 +439,10 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
                   ),
                 ),
                 const SizedBox(width: AppConstants.spaceM),
-                const Expanded(
+                Expanded(
                   child: _MetricCard(
                     title: 'Rating',
-                    value: '4.8 ★',
+                    value: '${worker?.averageRating ?? 4.9} ★',
                     icon: Icons.star_border_rounded,
                     color: AppColors.accent,
                   ),
@@ -219,6 +465,11 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
             // Interactive Request Card
             if (_jobStatus == 'pending') ...[
               Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  side: const BorderSide(color: AppColors.cardBorder),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppConstants.spaceM),
                   child: Column(
@@ -296,7 +547,12 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
               ),
             ] else if (_jobStatus == 'accepted') ...[
               Card(
+                elevation: 0,
                 color: AppColors.badgeApprovedBg,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  side: BorderSide(color: AppColors.success.withAlpha(50)),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppConstants.spaceM),
                   child: Column(
@@ -366,6 +622,11 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
               ),
             ] else if (_jobStatus == 'completed') ...[
               Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  side: const BorderSide(color: AppColors.cardBorder),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppConstants.spaceM),
                   child: Row(
@@ -394,6 +655,11 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
               ),
             ] else ...[
               Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  side: const BorderSide(color: AppColors.cardBorder),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppConstants.spaceM),
                   child: Row(
@@ -415,6 +681,7 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
                 ),
               ),
             ],
+            const SizedBox(height: AppConstants.spaceXL),
           ],
         ),
       ),
@@ -438,6 +705,11 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.radiusM),
+        side: const BorderSide(color: AppColors.cardBorder),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppConstants.spaceM),
         child: Column(
