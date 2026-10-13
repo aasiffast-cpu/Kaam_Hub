@@ -11,6 +11,8 @@ import '../features/worker/worker_dashboard_placeholder.dart';
 import '../models/user_role.dart';
 import '../services/auth_notifier.dart';
 
+import '../features/customer/select_location_screen.dart';
+
 /// Centralized named route identifiers and route generator for KaamHub.
 class AppRoutes {
   AppRoutes._();
@@ -23,6 +25,7 @@ class AppRoutes {
   static const String workerDashboard = '/worker/dashboard';
   static const String adminDashboard = '/admin/dashboard';
   static const String profile = '/profile';
+  static const String mapLocation = '/map_location';
 
   /// Generates the requested route dynamically, applying security guards.
   static Route<dynamic> onGenerateRoute(
@@ -80,6 +83,14 @@ class AppRoutes {
       case profile:
         return MaterialPageRoute(
           builder: (_) => ProfileScreen(authNotifier: authNotifier),
+          settings: settings,
+        );
+
+      case mapLocation:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return MaterialPageRoute(
+          builder: (_) =>
+              SelectLocationScreen(initialCityId: args['cityId'] as String?),
           settings: settings,
         );
 

@@ -18,6 +18,7 @@ class CustomerHomeScreen extends StatefulWidget {
 
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   int _selectedCategoryIndex = 0;
+  String _currentServiceArea = 'Farid Town, Sahiwal';
 
   final List<Map<String, dynamic>> _categories = [
     {
@@ -101,6 +102,77 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     style: TextStyle(color: AppColors.textMuted, fontSize: 14),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: AppConstants.spaceM),
+
+            // Corridor City & Map Location Bar
+            InkWell(
+              onTap: () async {
+                final result = await Navigator.pushNamed(
+                  context,
+                  AppRoutes.mapLocation,
+                );
+                if (result != null && result is Map) {
+                  setState(() {
+                    _currentServiceArea = result['address'] as String;
+                  });
+                }
+              },
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+              child: Container(
+                padding: const EdgeInsets.all(AppConstants.spaceM),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(15),
+                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                  border: Border.all(color: AppColors.primary.withAlpha(50)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.map_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: AppConstants.spaceM),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Service Location (Sahiwal ➔ Lahore)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _currentServiceArea,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: AppConstants.spaceL),

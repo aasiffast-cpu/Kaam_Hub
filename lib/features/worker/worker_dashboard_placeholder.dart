@@ -245,14 +245,30 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Customer: Gulberg III, Lahore • 2.4 km away',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Customer: Gulberg III, Lahore • 2.4 km away',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            icon: const Icon(Icons.map_rounded, size: 16),
+                            label: const Text('View Map'),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.mapLocation,
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: AppConstants.spaceM),
+                      const SizedBox(height: AppConstants.spaceS),
                       Row(
                         children: [
                           Expanded(
