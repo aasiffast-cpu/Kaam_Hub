@@ -18,8 +18,8 @@ void main() {
 
     expect(find.text(AppStrings.appName), findsOneWidget);
     expect(find.text(AppStrings.appTagline), findsOneWidget);
-    expect(find.text('Customer Experience'), findsOneWidget);
-    expect(find.text('Service Worker Portal'), findsOneWidget);
+    expect(find.text('Customer Dashboard'), findsOneWidget);
+    expect(find.text('Service Provider Dashboard'), findsOneWidget);
     expect(find.text('Log In'), findsOneWidget);
     expect(find.text('Sign Up'), findsOneWidget);
   });
@@ -51,8 +51,8 @@ void main() {
     await tester.pumpWidget(KaamHubApp(authNotifier: authNotifier));
     await tester.pumpAndSettle();
 
-    // Tap into Worker Portal
-    await tester.tap(find.text('Service Worker Portal'));
+    // Tap into Service Provider Dashboard
+    await tester.tap(find.text('Service Provider Dashboard'));
     await tester.pumpAndSettle();
 
     // Verify initial active jobs is 2

@@ -250,9 +250,9 @@ class RoleSelectionScreen extends StatelessWidget {
                 child: ListView(
                   children: [
                     _RoleCard(
-                      title: 'Customer Experience',
-                      subtitle: AppStrings.customerRoleDescription,
-                      icon: Icons.person_search_rounded,
+                      title: 'Customer Dashboard',
+                      subtitle: 'Browse verified workers along Sahiwal-Lahore corridor, book services & track orders.',
+                      icon: Icons.dashboard_customize_rounded,
                       color: AppColors.primary,
                       onTap: () async {
                         if (authNotifier != null &&
@@ -260,15 +260,18 @@ class RoleSelectionScreen extends StatelessWidget {
                           await authNotifier!.signInWithDemo(UserRole.customer);
                         }
                         if (context.mounted) {
-                          Navigator.pushNamed(context, AppRoutes.customerHome);
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.customerDashboard,
+                          );
                         }
                       },
                     ),
                     const SizedBox(height: AppConstants.spaceM),
                     _RoleCard(
-                      title: 'Service Worker Portal',
-                      subtitle: AppStrings.workerRoleDescription,
-                      icon: Icons.construction_rounded,
+                      title: 'Service Provider Dashboard',
+                      subtitle: 'Accept jobs, check earnings, upload compulsory CNIC & police clearance, preview public profile.',
+                      icon: Icons.engineering_rounded,
                       color: AppColors.secondary,
                       onTap: () async {
                         if (authNotifier != null &&
@@ -278,7 +281,7 @@ class RoleSelectionScreen extends StatelessWidget {
                         if (context.mounted) {
                           Navigator.pushNamed(
                             context,
-                            AppRoutes.workerDashboard,
+                            AppRoutes.serviceProviderDashboard,
                           );
                         }
                       },

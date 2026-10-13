@@ -8,10 +8,10 @@ import '../features/auth/phone_sign_in_screen.dart';
 import '../features/auth/profile_screen.dart';
 import '../features/auth/role_selection_screen.dart';
 import '../features/auth/sign_up_screen.dart';
-import '../features/customer/customer_home_placeholder.dart';
+import '../features/customer/customer_dashboard_screen.dart';
 import '../features/customer/select_location_screen.dart';
 import '../features/customer/worker_profile_screen.dart';
-import '../features/worker/worker_dashboard_placeholder.dart';
+import '../features/worker/service_provider_dashboard_screen.dart';
 import '../features/worker/worker_document_upload_screen.dart';
 import '../models/user_role.dart';
 import '../models/worker_model.dart';
@@ -28,7 +28,10 @@ class AppRoutes {
   static const String phoneSignIn = '/sign_in';
   static const String otpVerification = '/verify_otp';
   static const String customerHome = '/customer/home';
+  static const String customerDashboard = '/customer/dashboard';
   static const String workerDashboard = '/worker/dashboard';
+  static const String serviceProviderDashboard =
+      '/worker/service_provider_dashboard';
   static const String workerDocumentUpload = '/worker/upload_documents';
   static const String workerProfile = '/worker_profile';
   static const String adminDashboard = '/admin/dashboard';
@@ -80,14 +83,26 @@ class AppRoutes {
         );
 
       case customerHome:
+      case customerDashboard:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final tabIndex = args['tabIndex'] as int? ?? 0;
         return MaterialPageRoute(
-          builder: (_) => CustomerHomeScreen(authNotifier: authNotifier),
+          builder: (_) => CustomerDashboardScreen(
+            authNotifier: authNotifier,
+            initialTabIndex: tabIndex,
+          ),
           settings: settings,
         );
 
       case workerDashboard:
+      case serviceProviderDashboard:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final tabIndex = args['tabIndex'] as int? ?? 0;
         return MaterialPageRoute(
-          builder: (_) => WorkerDashboardScreen(authNotifier: authNotifier),
+          builder: (_) => ServiceProviderDashboardScreen(
+            authNotifier: authNotifier,
+            initialTabIndex: tabIndex,
+          ),
           settings: settings,
         );
 
