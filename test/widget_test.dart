@@ -16,6 +16,25 @@ void main() {
     expect(find.text(AppStrings.appTagline), findsOneWidget);
     expect(find.text('Customer Experience'), findsOneWidget);
     expect(find.text('Service Worker Portal'), findsOneWidget);
+    expect(find.text('Log In'), findsOneWidget);
+    expect(find.text('Sign Up'), findsOneWidget);
+  });
+
+  testWidgets('Login and Sign Up navigation test', (WidgetTester tester) async {
+    await tester.pumpWidget(const KaamHubApp());
+    await tester.pumpAndSettle();
+
+    // Tap Log In button
+    await tester.tap(find.text('Log In'));
+    await tester.pumpAndSettle();
+    expect(find.text('Account Login'), findsOneWidget);
+    expect(find.text('Welcome Back to KaamHub'), findsOneWidget);
+
+    // Tap Sign Up Now link to switch to registration
+    await tester.tap(find.text('Sign Up Now'));
+    await tester.pumpAndSettle();
+    expect(find.text('Create New Account'), findsOneWidget);
+    expect(find.text('Join KaamHub Marketplace'), findsOneWidget);
   });
 
   testWidgets('Worker dashboard interactive test: Accept job updates state', (

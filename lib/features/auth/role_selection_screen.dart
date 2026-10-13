@@ -115,12 +115,49 @@ class RoleSelectionScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppConstants.spaceM),
               ] else ...[
-                PrimaryButton(
-                  text: 'Sign In with Mobile OTP',
-                  icon: Icons.phone_android_rounded,
-                  onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.phoneSignIn);
-                  },
+                Row(
+                  children: [
+                    Expanded(
+                      child: PrimaryButton(
+                        text: 'Log In',
+                        icon: Icons.login_rounded,
+                        onPressed: () {
+                          Navigator.pushNamed(context, AppRoutes.login);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: AppConstants.spaceM),
+                    Expanded(
+                      child: SizedBox(
+                        height: 50,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pushNamed(context, AppRoutes.signUp);
+                          },
+                          icon: const Icon(Icons.person_add_rounded, size: 20),
+                          label: const Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusM,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppConstants.spaceM),
               ],

@@ -107,8 +107,8 @@ class _AppMapPickerState extends State<AppMapPicker> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: CorridorCities.all.length,
-                  separatorBuilder:
-                      (context, index) => const SizedBox(width: 8),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 8),
                   itemBuilder: (context, index) {
                     final city = CorridorCities.all[index];
                     final isSelected = city.id == _selectedCity.id;

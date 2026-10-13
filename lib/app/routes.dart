@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../features/admin/admin_dashboard_placeholder.dart';
 import '../features/auth/admin_access_guard.dart';
+import '../features/auth/login_screen.dart';
 import '../features/auth/otp_verification_screen.dart';
 import '../features/auth/phone_sign_in_screen.dart';
 import '../features/auth/profile_screen.dart';
 import '../features/auth/role_selection_screen.dart';
+import '../features/auth/sign_up_screen.dart';
 import '../features/customer/customer_home_placeholder.dart';
+import '../features/customer/select_location_screen.dart';
 import '../features/worker/worker_dashboard_placeholder.dart';
 import '../models/user_role.dart';
 import '../services/auth_notifier.dart';
-
-import '../features/customer/select_location_screen.dart';
 
 /// Centralized named route identifiers and route generator for KaamHub.
 class AppRoutes {
@@ -19,6 +20,8 @@ class AppRoutes {
 
   static const String initial = '/';
   static const String roleSelection = '/role_selection';
+  static const String login = '/login';
+  static const String signUp = '/signup';
   static const String phoneSignIn = '/sign_in';
   static const String otpVerification = '/verify_otp';
   static const String customerHome = '/customer/home';
@@ -37,6 +40,18 @@ class AppRoutes {
       case roleSelection:
         return MaterialPageRoute(
           builder: (_) => RoleSelectionScreen(authNotifier: authNotifier),
+          settings: settings,
+        );
+
+      case login:
+        return MaterialPageRoute(
+          builder: (_) => LoginScreen(authNotifier: authNotifier),
+          settings: settings,
+        );
+
+      case signUp:
+        return MaterialPageRoute(
+          builder: (_) => SignUpScreen(authNotifier: authNotifier),
           settings: settings,
         );
 
