@@ -135,6 +135,79 @@ class RoleSelectionScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppConstants.spaceS),
 
+              // Quick Corridor Map Access
+              InkWell(
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.mapLocation);
+                },
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                child: Container(
+                  padding: const EdgeInsets.all(AppConstants.spaceM),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.secondary],
+                    ),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withAlpha(40),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(50),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusS,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.map_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: AppConstants.spaceM),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Open Corridor Street Map',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Sahiwal ➔ Okara ➔ Pattoki ➔ Lahore (All Streets)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppConstants.spaceM),
+
               // Role Cards
               Expanded(
                 child: ListView(
