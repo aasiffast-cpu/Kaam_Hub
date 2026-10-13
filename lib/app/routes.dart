@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../features/admin/admin_dashboard_placeholder.dart';
+import '../features/auth/admin_access_guard.dart';
+import '../features/auth/otp_verification_screen.dart';
+import '../features/auth/phone_sign_in_screen.dart';
+import '../features/auth/profile_screen.dart';
 import '../features/auth/role_selection_screen.dart';
 import '../features/customer/customer_home_placeholder.dart';
 import '../features/worker/worker_dashboard_placeholder.dart';
+import '../models/user_role.dart';
+import '../services/auth_notifier.dart';
 
 /// Centralized named route identifiers and route generator for KaamHub.
 class AppRoutes {
@@ -11,35 +17,69 @@ class AppRoutes {
 
   static const String initial = '/';
   static const String roleSelection = '/role_selection';
+  static const String phoneSignIn = '/sign_in';
+  static const String otpVerification = '/verify_otp';
   static const String customerHome = '/customer/home';
   static const String workerDashboard = '/worker/dashboard';
   static const String adminDashboard = '/admin/dashboard';
+  static const String profile = '/profile';
 
-  /// Generates the requested route dynamically.
-  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+  /// Generates the requested route dynamically, applying security guards.
+  static Route<dynamic> onGenerateRoute(
+    RouteSettings settings,
+    AuthNotifier authNotifier,
+  ) {
     switch (settings.name) {
       case initial:
       case roleSelection:
         return MaterialPageRoute(
-          builder: (_) => const RoleSelectionScreen(),
+          builder: (_) => RoleSelectionScreen(authNotifier: authNotifier),
+          settings: settings,
+        );
+
+      case phoneSignIn:
+        return MaterialPageRoute(
+          builder: (_) => PhoneSignInScreen(authNotifier: authNotifier),
+          settings: settings,
+        );
+
+      case otpVerification:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return MaterialPageRoute(
+          builder: (_) => OtpVerificationScreen(
+            authNotifier: authNotifier,
+            verificationId: args['verificationId'] as String? ?? 'demo_id',
+            phoneNumber: args['phoneNumber'] as String? ?? '+92 300 1234567',
+            name: args['name'] as String?,
+            initialRole: args['role'] as UserRole? ?? UserRole.customer,
+          ),
           settings: settings,
         );
 
       case customerHome:
         return MaterialPageRoute(
-          builder: (_) => const CustomerHomeScreen(),
+          builder: (_) => CustomerHomeScreen(authNotifier: authNotifier),
           settings: settings,
         );
 
       case workerDashboard:
         return MaterialPageRoute(
-          builder: (_) => const WorkerDashboardScreen(),
+          builder: (_) => WorkerDashboardScreen(authNotifier: authNotifier),
           settings: settings,
         );
 
       case adminDashboard:
         return MaterialPageRoute(
-          builder: (_) => const AdminDashboardScreen(),
+          builder: (_) => AdminAccessGuard(
+            authNotifier: authNotifier,
+            child: AdminDashboardScreen(authNotifier: authNotifier),
+          ),
+          settings: settings,
+        );
+
+      case profile:
+        return MaterialPageRoute(
+          builder: (_) => ProfileScreen(authNotifier: authNotifier),
           settings: settings,
         );
 

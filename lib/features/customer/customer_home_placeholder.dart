@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_strings.dart';
+import '../../services/auth_notifier.dart';
 
 /// Customer home screen shell representing Stage 1 navigation foundation.
 class CustomerHomeScreen extends StatefulWidget {
-  const CustomerHomeScreen({super.key});
+  final AuthNotifier? authNotifier;
+
+  const CustomerHomeScreen({super.key, this.authNotifier});
 
   @override
   State<CustomerHomeScreen> createState() => _CustomerHomeScreenState();
@@ -45,16 +49,18 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = widget.authNotifier?.currentUser;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'KaamHub Services',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              user != null ? 'Hello, ${user.name}' : 'KaamHub Services',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
             ),
-            Text(
+            const Text(
               'Lahore • Verified Providers Only',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
@@ -62,8 +68,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: () {},
+            icon: const Icon(Icons.account_circle_outlined),
+            tooltip: 'Account Profile',
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.profile);
+            },
           ),
         ],
       ),

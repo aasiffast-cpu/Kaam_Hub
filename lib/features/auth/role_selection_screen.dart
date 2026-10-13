@@ -4,14 +4,20 @@ import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/widgets/primary_button.dart';
+import '../../models/user_role.dart';
+import '../../services/auth_notifier.dart';
 
 /// Screen allowing users to select and preview their experience by role.
-/// Used in Stage 1 to validate navigation before Firebase Auth is wired in Stage 2.
 class RoleSelectionScreen extends StatelessWidget {
-  const RoleSelectionScreen({super.key});
+  final AuthNotifier? authNotifier;
+
+  const RoleSelectionScreen({super.key, this.authNotifier});
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = authNotifier?.currentUser;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -19,7 +25,7 @@ class RoleSelectionScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: AppConstants.spaceL),
+              const SizedBox(height: AppConstants.spaceM),
               // App Branding
               Center(
                 child: Container(
@@ -64,58 +70,138 @@ class RoleSelectionScreen extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: AppConstants.spaceXL),
+              const SizedBox(height: AppConstants.spaceL),
+
+              // Active user banner if logged in, or Sign In button
+              if (currentUser != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.spaceM,
+                    vertical: AppConstants.spaceS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.badgeApprovedBg,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                    border: Border.all(
+                      color: AppColors.badgeApprovedText.withAlpha(40),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.badgeApprovedText,
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppConstants.spaceS),
+                      Expanded(
+                        child: Text(
+                          'Signed in as: ${currentUser.name} (${currentUser.role.displayName})',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.badgeApprovedText,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, AppRoutes.profile);
+                        },
+                        child: const Text('Profile'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+              ] else ...[
+                PrimaryButton(
+                  text: 'Sign In with Mobile OTP',
+                  icon: Icons.phone_android_rounded,
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.phoneSignIn);
+                  },
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+              ],
+
               const Text(
-                AppStrings.selectRolePrompt,
+                'Explore / Switch Portal:',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: AppConstants.spaceM),
+              const SizedBox(height: AppConstants.spaceS),
+
               // Role Cards
               Expanded(
                 child: ListView(
                   children: [
                     _RoleCard(
-                      title: 'Customer',
+                      title: 'Customer Experience',
                       subtitle: AppStrings.customerRoleDescription,
                       icon: Icons.person_search_rounded,
                       color: AppColors.primary,
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.customerHome);
+                      onTap: () async {
+                        if (authNotifier != null &&
+                            currentUser?.role != UserRole.customer) {
+                          await authNotifier!.signInWithDemo(UserRole.customer);
+                        }
+                        if (context.mounted) {
+                          Navigator.pushNamed(context, AppRoutes.customerHome);
+                        }
                       },
                     ),
                     const SizedBox(height: AppConstants.spaceM),
                     _RoleCard(
-                      title: 'Service Worker',
+                      title: 'Service Worker Portal',
                       subtitle: AppStrings.workerRoleDescription,
                       icon: Icons.construction_rounded,
                       color: AppColors.secondary,
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.workerDashboard);
+                      onTap: () async {
+                        if (authNotifier != null &&
+                            currentUser?.role != UserRole.worker) {
+                          await authNotifier!.signInWithDemo(UserRole.worker);
+                        }
+                        if (context.mounted) {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.workerDashboard,
+                          );
+                        }
                       },
                     ),
                     const SizedBox(height: AppConstants.spaceM),
                     _RoleCard(
-                      title: 'Administrator',
+                      title: 'Administrator Console (Guarded)',
                       subtitle: AppStrings.adminRoleDescription,
                       icon: Icons.admin_panel_settings_rounded,
                       color: AppColors.accent,
-                      onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.adminDashboard);
+                      onTap: () async {
+                        if (authNotifier != null &&
+                            currentUser?.role != UserRole.admin) {
+                          await authNotifier!.signInWithDemo(UserRole.admin);
+                        }
+                        if (context.mounted) {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.adminDashboard,
+                          );
+                        }
                       },
                     ),
                   ],
                 ),
               ),
+
               const Text(
-                'Stage 1 Navigation Verification • KaamHub MVP',
+                'Stage 2 Authentication & Role Routing • KaamHub MVP',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: AppColors.textMuted),
               ),
-              const SizedBox(height: AppConstants.spaceS),
+              const SizedBox(height: AppConstants.spaceXS),
             ],
           ),
         ),
@@ -167,7 +253,7 @@ class _RoleCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),

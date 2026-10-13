@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
+import '../../services/auth_notifier.dart';
 
-/// Worker dashboard shell representing Stage 1 navigation foundation.
+/// Worker dashboard shell representing Stage 2 navigation & interactive job acceptance.
 class WorkerDashboardScreen extends StatefulWidget {
-  const WorkerDashboardScreen({super.key});
+  final AuthNotifier? authNotifier;
+
+  const WorkerDashboardScreen({super.key, this.authNotifier});
 
   @override
   State<WorkerDashboardScreen> createState() => _WorkerDashboardScreenState();
@@ -13,12 +17,80 @@ class WorkerDashboardScreen extends StatefulWidget {
 
 class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
   bool _isAvailable = true;
+  int _activeJobs = 2;
+  int _completedJobs = 18;
+
+  // Interactive sample request state
+  String _jobStatus =
+      'pending'; // 'pending', 'accepted', 'completed', 'declined'
+
+  void _acceptJob() {
+    setState(() {
+      _jobStatus = 'accepted';
+      _activeJobs++;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: AppColors.success,
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Job Accepted! Customer notified you are on your way.',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _declineJob() {
+    setState(() {
+      _jobStatus = 'declined';
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Job declined. Request passed to nearby providers.'),
+      ),
+    );
+  }
+
+  void _completeJob() {
+    setState(() {
+      _jobStatus = 'completed';
+      _activeJobs--;
+      _completedJobs++;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: AppColors.success,
+        content: Text('Job marked completed! Earnings added to your summary.'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = widget.authNotifier?.currentUser;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Worker Dashboard'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              user != null ? '${user.name} (Worker)' : 'Worker Dashboard',
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+            ),
+            const Text(
+              'Electrician • Lahore',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
         actions: [
           Row(
             children: [
@@ -38,6 +110,13 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
                   });
                 },
                 activeThumbColor: AppColors.success,
+              ),
+              IconButton(
+                icon: const Icon(Icons.account_circle_outlined),
+                tooltip: 'Profile',
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.profile);
+                },
               ),
             ],
           ),
@@ -94,27 +173,27 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
             const SizedBox(height: AppConstants.spaceL),
 
             // Performance Metric Counters
-            const Row(
+            Row(
               children: [
                 Expanded(
                   child: _MetricCard(
                     title: 'Active Jobs',
-                    value: '2',
+                    value: '$_activeJobs',
                     icon: Icons.work_outline_rounded,
                     color: AppColors.primary,
                   ),
                 ),
-                SizedBox(width: AppConstants.spaceM),
+                const SizedBox(width: AppConstants.spaceM),
                 Expanded(
                   child: _MetricCard(
                     title: 'Completed',
-                    value: '18',
+                    value: '$_completedJobs',
                     icon: Icons.check_circle_outline_rounded,
                     color: AppColors.success,
                   ),
                 ),
-                SizedBox(width: AppConstants.spaceM),
-                Expanded(
+                const SizedBox(width: AppConstants.spaceM),
+                const Expanded(
                   child: _MetricCard(
                     title: 'Rating',
                     value: '4.8 ★',
@@ -137,67 +216,189 @@ class _WorkerDashboardScreenState extends State<WorkerDashboardScreen> {
             ),
             const SizedBox(height: AppConstants.spaceS),
 
-            // Sample Request Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppConstants.spaceM),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Tap & Pipe Leak Repair',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          'Rs. 1,000 est.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Customer: Gulberg III, Lahore • 2.4 km away',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: AppConstants.spaceM),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {},
-                            child: const Text('Decline'),
-                          ),
-                        ),
-                        const SizedBox(width: AppConstants.spaceM),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
+            // Interactive Request Card
+            if (_jobStatus == 'pending') ...[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppConstants.spaceM),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Tap & Pipe Leak Repair',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
                             ),
-                            child: const Text('Accept Job'),
                           ),
+                          Text(
+                            'Rs. 1,000 est.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Customer: Gulberg III, Lahore • 2.4 km away',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: AppConstants.spaceM),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _declineJob,
+                              child: const Text('Decline'),
+                            ),
+                          ),
+                          const SizedBox(width: AppConstants.spaceM),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _acceptJob,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Accept Job'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ] else if (_jobStatus == 'accepted') ...[
+              Card(
+                color: AppColors.badgeApprovedBg,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppConstants.spaceM),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Tap & Pipe Leak Repair',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.badgeApprovedText,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.success,
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusFull,
+                              ),
+                            ),
+                            child: const Text(
+                              'ACCEPTED',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Service Address: House 42, Block B, Gulberg III, Lahore',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.badgeApprovedText,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _completeJob,
+                              icon: const Icon(Icons.check_circle_rounded),
+                              label: const Text('Mark Completed'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.success,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ] else if (_jobStatus == 'completed') ...[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppConstants.spaceM),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.verified,
+                        color: AppColors.success,
+                        size: 28,
+                      ),
+                      const SizedBox(width: AppConstants.spaceM),
+                      const Expanded(
+                        child: Text(
+                          'Job successfully completed & recorded.',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _jobStatus = 'pending');
+                        },
+                        child: const Text('Reset Demo'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ] else ...[
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppConstants.spaceM),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.cancel_outlined,
+                        color: AppColors.textMuted,
+                      ),
+                      const SizedBox(width: AppConstants.spaceM),
+                      const Expanded(child: Text('Job was declined.')),
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _jobStatus = 'pending');
+                        },
+                        child: const Text('Reset Demo'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
