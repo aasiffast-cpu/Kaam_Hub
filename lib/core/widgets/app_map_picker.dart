@@ -185,11 +185,9 @@ class _AppMapPickerState extends State<AppMapPicker> {
                 children: [
                   TileLayer(
                     urlTemplate:
-                        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                    subdomains: const ['a', 'b', 'c', 'd'],
+                        'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.kaamhub.kaamhub',
                     maxZoom: 19,
-                    retinaMode: true,
                   ),
                   MarkerLayer(
                     markers: [
