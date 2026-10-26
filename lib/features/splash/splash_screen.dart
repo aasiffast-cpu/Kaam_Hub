@@ -6,11 +6,14 @@ import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/localization/app_locale_notifier.dart';
+import '../../models/user_role.dart';
+import '../../services/auth_notifier.dart';
 
-/// Splash screen shown at app launch with KaamHub emerald branding,
-/// bilingual English/Urdu support, animated brand mark, and smooth role transition.
+/// Splash screen — animated brand intro, language selector, then auto-routes
+/// based on existing auth state (logged-in users go directly to their dashboard).
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final AuthNotifier? authNotifier;
+  const SplashScreen({super.key, this.authNotifier});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -53,7 +56,28 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigateForward() {
     _navigationTimer?.cancel();
-    Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
+    if (!mounted) return;
+
+    final auth = widget.authNotifier;
+    if (auth != null && auth.isAuthenticated && auth.currentUser != null) {
+      // User already logged in — go directly to their dashboard
+      final role = auth.currentUser!.role;
+      switch (role) {
+        case UserRole.customer:
+          Navigator.pushReplacementNamed(context, AppRoutes.customerDashboard);
+          break;
+        case UserRole.worker:
+          Navigator.pushReplacementNamed(
+              context, AppRoutes.serviceProviderDashboard);
+          break;
+        case UserRole.admin:
+          Navigator.pushReplacementNamed(context, AppRoutes.adminDashboard);
+          break;
+      }
+    } else {
+      // Not logged in — show role selection / login
+      Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
+    }
   }
 
   @override
@@ -70,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
             children: [
               const Spacer(flex: 2),
 
-              // Animated KaamHub Emerald Brand Mark
+              // Animated KaamHub Brand Mark
               FadeTransition(
                 opacity: _fadeAnim,
                 child: ScaleTransition(
@@ -202,11 +226,10 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: AppConstants.spaceM),
 
-              // Pilot launch corridor footer
               FadeTransition(
                 opacity: _fadeAnim,
                 child: const Text(
-                  'v1.0 MVP • Lahore - Sahiwal - Okara Corridor',
+                  'v1.0 • Lahore - Sahiwal - Okara Corridor',
                   style: TextStyle(fontSize: 11, color: Colors.white54),
                 ),
               ),

@@ -17,39 +17,9 @@ class MockAuthService implements AuthService {
 
   UserModel? _currentUser;
 
-  // Pre-seeded demo accounts
-  static final UserModel demoCustomer = UserModel(
-    uid: 'cust_001',
-    name: 'Ahmed Khan',
-    phoneNumber: '+92 300 1234567',
-    role: UserRole.customer,
-    createdAt: DateTime(2026, 1, 10),
-  );
-
-  static final UserModel demoWorker = UserModel(
-    uid: 'work_001',
-    name: 'Rashid Ali',
-    phoneNumber: '+92 300 7654321',
-    role: UserRole.worker,
-    createdAt: DateTime(2026, 1, 15),
-  );
-
-  static final UserModel demoAdmin = UserModel(
-    uid: 'adm_001',
-    name: 'Safety Supervisor',
-    phoneNumber: '+92 300 9999999',
-    role: UserRole.admin,
-    createdAt: DateTime(2025, 12, 1),
-  );
-
   final Map<String, UserModel> _usersDb = {};
 
-  MockAuthService._internal() {
-    // Seed initial users database
-    _usersDb[demoCustomer.phoneNumber] = demoCustomer;
-    _usersDb[demoWorker.phoneNumber] = demoWorker;
-    _usersDb[demoAdmin.phoneNumber] = demoAdmin;
-  }
+  MockAuthService._internal();
 
   @override
   Stream<UserModel?> get authStateChanges => _authStateController.stream;
@@ -87,9 +57,9 @@ class MockAuthService implements AuthService {
   }) async {
     await Future.delayed(const Duration(milliseconds: 700));
 
-    // Standard demo OTP is 123456
+    // OTP for testing is 123456
     if (smsCode != '123456' && smsCode != '000000') {
-      throw const AuthException('Invalid OTP code. For demo, use 123456.');
+      throw const AuthException('Invalid OTP code. Use 123456 for testing.');
     }
 
     // Security Guard: Prevent role escalation to admin during normal sign-in/registration
@@ -99,7 +69,7 @@ class MockAuthService implements AuthService {
       );
     }
 
-    // Check if phone matches one of our demo accounts
+    // Create a user record for the verified phone
     final user = UserModel(
       uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
       name: defaultName?.trim().isNotEmpty == true
@@ -117,18 +87,8 @@ class MockAuthService implements AuthService {
 
   /// Quick sign-in helper for development and UI inspection.
   Future<void> signInWithDemoAccount(UserRole role) async {
-    switch (role) {
-      case UserRole.customer:
-        _currentUser = demoCustomer;
-        break;
-      case UserRole.worker:
-        _currentUser = demoWorker;
-        break;
-      case UserRole.admin:
-        _currentUser = demoAdmin;
-        break;
-    }
-    _authStateController.add(_currentUser);
+    // Demo accounts removed — use real OTP sign-in flow.
+    throw UnsupportedError('Demo accounts have been removed. Use real sign-in.');
   }
 
   @override
@@ -140,7 +100,8 @@ class MockAuthService implements AuthService {
   @override
   Future<UserModel> updateUserProfile({String? name, String? photoUrl}) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    final current = _currentUser ?? demoCustomer;
+    final current = _currentUser;
+    if (current == null) throw const AuthException('No user is signed in.');
     final updated = current.copyWith(
       name: name?.trim().isNotEmpty == true ? name!.trim() : current.name,
       photoUrl: photoUrl ?? current.photoUrl,
@@ -153,9 +114,10 @@ class MockAuthService implements AuthService {
 
   @override
   Future<UserModel?> getUserProfile(String uid) async {
-    return _usersDb.values.firstWhere(
-      (u) => u.uid == uid,
-      orElse: () => _currentUser ?? demoCustomer,
-    );
+    try {
+      return _usersDb.values.firstWhere((u) => u.uid == uid);
+    } catch (_) {
+      return _currentUser;
+    }
   }
 }

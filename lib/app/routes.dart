@@ -85,7 +85,7 @@ class AppRoutes {
       // Splash
       case splash:
         return MaterialPageRoute(
-          builder: (_) => const SplashScreen(),
+          builder: (_) => SplashScreen(authNotifier: authNotifier),
           settings: settings,
         );
 

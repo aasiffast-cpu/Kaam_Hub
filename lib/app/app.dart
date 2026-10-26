@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_strings.dart';
 import '../core/localization/app_locale_notifier.dart';
 import '../services/auth_notifier.dart';
+import '../services/mock_auth_service.dart';
 import 'routes.dart';
 import 'theme.dart';
 
@@ -12,11 +13,17 @@ class KaamHubApp extends StatefulWidget {
   final LocaleNotifier? localeNotifier;
   final String? initialRoute;
 
+  /// Whether Firebase was successfully initialised.
+  /// When true, Firestore / Firebase Auth services are used.
+  /// When false, in-memory mock services are used (no fake seeded data).
+  final bool firebaseReady;
+
   const KaamHubApp({
     super.key,
     this.authNotifier,
     this.localeNotifier,
     this.initialRoute,
+    this.firebaseReady = false,
   });
 
   @override
@@ -30,7 +37,8 @@ class _KaamHubAppState extends State<KaamHubApp> {
   @override
   void initState() {
     super.initState();
-    _authNotifier = widget.authNotifier ?? AuthNotifier();
+    _authNotifier =
+        widget.authNotifier ?? AuthNotifier(authService: MockAuthService());
     _localeNotifier = widget.localeNotifier ?? LocaleNotifier();
   }
 
