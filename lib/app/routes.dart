@@ -12,6 +12,7 @@ import '../features/auth/phone_sign_in_screen.dart';
 import '../features/auth/profile_screen.dart';
 import '../features/auth/role_selection_screen.dart';
 import '../features/auth/sign_up_screen.dart';
+import '../features/auth/welcome_auth_screen.dart';
 import '../features/customer/chat_list_screen.dart';
 import '../features/customer/chat_screen.dart';
 import '../features/customer/create_request_screen.dart';
@@ -40,6 +41,7 @@ class AppRoutes {
   static const String splash = '/splash';
   static const String initial = '/';
   static const String onboarding = '/onboarding';
+  static const String welcome = '/welcome';
   static const String roleSelection = '/role_selection';
 
   // ── Auth ─────────────────────────────────────────────────────────────────
@@ -95,6 +97,13 @@ class AppRoutes {
       case onboarding:
         return MaterialPageRoute(
           builder: (_) => OnboardingScreen(authNotifier: authNotifier),
+          settings: settings,
+        );
+
+      // Clean Auth Gateway (Login / Sign Up choice)
+      case welcome:
+        return MaterialPageRoute(
+          builder: (_) => WelcomeAuthScreen(authNotifier: authNotifier),
           settings: settings,
         );
 
