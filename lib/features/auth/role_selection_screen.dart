@@ -29,35 +29,15 @@ class RoleSelectionScreen extends StatelessWidget {
               // App Branding
               Center(
                 child: Container(
-                  width: 64,
                   height: 64,
+                  width: 200,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withAlpha(50),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
                   ),
-                  child: const Icon(
-                    Icons.handyman_rounded,
-                    color: Colors.white,
-                    size: 36,
+                  child: Image.asset(
+                    'assets/images/kaamhub_logo.png',
+                    fit: BoxFit.contain,
                   ),
-                ),
-              ),
-              const SizedBox(height: AppConstants.spaceM),
-              const Text(
-                AppStrings.appName,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                  letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: AppConstants.spaceXS),

@@ -1,38 +1,41 @@
 import 'package:flutter/material.dart';
 
-/// Centralized color palette for the KaamHub application.
-/// Provides consistent brand colors, neutral tones, and semantic state colors.
+/// Centralized color palette for KaamHub.
+/// Designed for a premium, trustworthy Pakistani services brand:
+/// Deep forest green / emerald primary, warm off-white backgrounds,
+/// dark readable text, and a restrained amber accent.
 class AppColors {
   AppColors._();
 
-  // Primary Brand Colors (Trustworthy, reliable blue)
-  static const Color primary = Color(0xFF1E40AF); // Deep Blue
-  static const Color primaryLight = Color(0xFF3B82F6);
-  static const Color primaryDark = Color(0xFF1E3A8A);
+  // Primary Brand Colors (Deep Forest Green / Emerald)
+  static const Color primary = Color(0xFF0F5132); // Deep Forest Green
+  static const Color primaryLight = Color(0xFF198754); // Emerald Green
+  static const Color primaryDark = Color(0xFF0A3622); // Deepest Pine
 
-  // Secondary Accent Colors (Growth, safety green)
-  static const Color secondary = Color(0xFF0D9488); // Teal
-  static const Color secondaryLight = Color(0xFF14B8A6);
+  // Secondary Accent Colors (Leaf Green / Mint)
+  static const Color secondary = Color(0xFF137547); // Refined Green
+  static const Color secondaryLight = Color(0xFF2E8B57); // Sea Green
 
-  // Accent / Warning (Amber/Gold)
-  static const Color accent = Color(0xFFF59E0B);
+  // Accent (Restrained Warm Amber / Gold)
+  static const Color accent = Color(0xFFD97706); // Warm Amber
+  static const Color accentLight = Color(0xFFF59E0B); // Amber Accent
 
-  // Neutral Colors (Backgrounds, surfaces, borders)
-  static const Color background = Color(0xFFF8FAFC);
+  // Neutral Colors (Warm off-white background, crisp surface, warm borders)
+  static const Color background = Color(0xFFF9FAF8); // Warm off-white
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color cardBorder = Color(0xFFE2E8F0);
-  static const Color divider = Color(0xFFE2E8F0);
+  static const Color cardBorder = Color(0xFFE5E7EB);
+  static const Color divider = Color(0xFFE5E7EB);
 
   // Typography Colors
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF64748B);
-  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textPrimary = Color(0xFF111827); // Dark readable charcoal
+  static const Color textSecondary = Color(0xFF4B5563); // Readable slate
+  static const Color textMuted = Color(0xFF9CA3AF); // Muted grey
 
   // Semantic Feedback Colors
-  static const Color success = Color(0xFF16A34A);
-  static const Color error = Color(0xFFDC2626);
-  static const Color warning = Color(0xFFD97706);
-  static const Color info = Color(0xFF2563EB);
+  static const Color success = Color(0xFF10B981); // Emerald success
+  static const Color error = Color(0xFFDC2626); // Crimson error
+  static const Color warning = Color(0xFFD97706); // Amber warning
+  static const Color info = Color(0xFF0284C7); // Sky blue info
 
   // Status Badge Colors
   static const Color badgePendingBg = Color(0xFFFEF3C7);

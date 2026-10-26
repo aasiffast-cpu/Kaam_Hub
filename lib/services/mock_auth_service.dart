@@ -138,6 +138,20 @@ class MockAuthService implements AuthService {
   }
 
   @override
+  Future<UserModel> updateUserProfile({String? name, String? photoUrl}) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    final current = _currentUser ?? demoCustomer;
+    final updated = current.copyWith(
+      name: name?.trim().isNotEmpty == true ? name!.trim() : current.name,
+      photoUrl: photoUrl ?? current.photoUrl,
+    );
+    _currentUser = updated;
+    _usersDb[updated.phoneNumber] = updated;
+    _authStateController.add(updated);
+    return updated;
+  }
+
+  @override
   Future<UserModel?> getUserProfile(String uid) async {
     return _usersDb.values.firstWhere(
       (u) => u.uid == uid,

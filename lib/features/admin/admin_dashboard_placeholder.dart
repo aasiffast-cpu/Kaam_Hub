@@ -211,7 +211,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // 1. Profile Photo
                   _buildInspectionDocTile(
                     title: '1. Profile Photo (Face Image)',
                     subtitle: 'Visible to customers on worker profile',
@@ -222,7 +221,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // 2. CNIC Front Side
                   _buildInspectionDocTile(
                     title: '2. CNIC Front Side (Shanakhti Card)',
                     subtitle: 'Verify 13-digit CNIC number, photo & full name',
@@ -230,7 +228,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // 3. CNIC Back Side
                   _buildInspectionDocTile(
                     title: '3. CNIC Back Side (Pichla Rukh)',
                     subtitle:
@@ -239,7 +236,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // 4. Police Clearance Certificate
                   _buildInspectionDocTile(
                     title: '4. Police Clearance Certificate',
                     subtitle:
@@ -248,7 +244,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Action Buttons
                   Row(
                     children: [
                       Expanded(
@@ -468,6 +463,66 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  Widget _buildManagementTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required String route,
+  }) {
+    return InkWell(
+      onTap: () => Navigator.pushNamed(context, route),
+      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+      child: Container(
+        padding: const EdgeInsets.all(AppConstants.spaceM),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withAlpha(25),
+                borderRadius: BorderRadius.circular(AppConstants.radiusS),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: AppConstants.spaceM),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: color, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -595,6 +650,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(height: AppConstants.spaceL),
 
+              // Platform Management Section
+              const Text(
+                'Platform Management',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              _buildManagementTile(
+                context,
+                icon: Icons.category_rounded,
+                title: 'Manage Service Categories',
+                subtitle: 'Add, edit, enable or disable trade categories',
+                color: AppColors.primary,
+                route: AppRoutes.adminCategories,
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              _buildManagementTile(
+                context,
+                icon: Icons.location_city_rounded,
+                title: 'Manage Cities',
+                subtitle: 'Enable or disable corridor cities',
+                color: AppColors.secondary,
+                route: AppRoutes.adminCities,
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              _buildManagementTile(
+                context,
+                icon: Icons.receipt_long_rounded,
+                title: 'All Service Requests',
+                subtitle: 'View bookings, disputes and reports',
+                color: AppColors.warning,
+                route: AppRoutes.adminRequests,
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              _buildManagementTile(
+                context,
+                icon: Icons.people_rounded,
+                title: 'Manage Users',
+                subtitle: 'Activate or deactivate customer / worker accounts',
+                color: AppColors.info,
+                route: AppRoutes.adminUsers,
+              ),
+              const SizedBox(height: AppConstants.spaceL),
+
               // Pending Worker Approvals Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -664,7 +766,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _pendingWorkers.length,
-                  separatorBuilder: (context, index) =>
+                  separatorBuilder: (_, r) =>
                       const SizedBox(height: AppConstants.spaceM),
                   itemBuilder: (context, index) {
                     final worker = _pendingWorkers[index];
@@ -762,8 +864,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ),
                             ),
                             const SizedBox(height: AppConstants.spaceM),
-
-                            // Inspection CTA & Quick Decisions
                             Row(
                               children: [
                                 Expanded(

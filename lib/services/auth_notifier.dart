@@ -104,6 +104,29 @@ class AuthNotifier extends ChangeNotifier {
     }
   }
 
+  /// Updates user profile details (name and profile image) and notifies listeners.
+  Future<UserModel> updateProfile({String? name, String? photoUrl}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updated = await _authService.updateUserProfile(
+        name: name,
+        photoUrl: photoUrl,
+      );
+      _currentUser = updated;
+      _isLoading = false;
+      notifyListeners();
+      return updated;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Logs out the user.
   Future<void> signOut() async {
     _isLoading = true;

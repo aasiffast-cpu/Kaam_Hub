@@ -4,6 +4,8 @@ import '../core/constants/app_colors.dart';
 import '../core/constants/app_constants.dart';
 
 /// Application theme configurations for KaamHub.
+/// Built with Material 3, deep forest green primary, warm off-white background,
+/// rounded cards, polished typography, and accessible touch targets.
 class AppTheme {
   AppTheme._();
 
@@ -21,7 +23,8 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
-      fontFamily: null, // Default system font for best device integration
+      fontFamily: null, // Default system font for best cross-platform & Urdu support
+
       // App Bar Theme
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surface,
@@ -45,6 +48,71 @@ class AppTheme {
           side: const BorderSide(color: AppColors.cardBorder, width: 1),
         ),
         margin: EdgeInsets.zero,
+      ),
+
+      // Elevated Button Theme
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+
+      // Outlined Button Theme
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.primary, width: 1.5),
+          minimumSize: const Size(double.infinity, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+
+      // Input Decoration Theme
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.surface,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.spaceM,
+          vertical: AppConstants.spaceM,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          borderSide: const BorderSide(color: AppColors.cardBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          borderSide: const BorderSide(color: AppColors.cardBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          borderSide: const BorderSide(
+            color: AppColors.primary,
+            width: 1.8,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          borderSide: const BorderSide(color: AppColors.error),
+        ),
+        hintStyle: const TextStyle(
+          color: AppColors.textMuted,
+          fontSize: 14,
+        ),
       ),
 
       // Divider Theme

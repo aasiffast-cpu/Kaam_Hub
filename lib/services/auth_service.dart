@@ -27,6 +27,9 @@ abstract class AuthService {
     UserRole initialRole = UserRole.customer,
   });
 
+  /// Updates user profile credentials (display name and profile photo).
+  Future<UserModel> updateUserProfile({String? name, String? photoUrl});
+
   /// Signs the currently authenticated user out.
   Future<void> signOut();
 

@@ -7,6 +7,7 @@ class UserModel {
   final String name;
   final String phoneNumber;
   final UserRole role;
+  final String? photoUrl;
   final DateTime createdAt;
   final bool isActive;
 
@@ -15,6 +16,7 @@ class UserModel {
     required this.name,
     required this.phoneNumber,
     required this.role,
+    this.photoUrl,
     required this.createdAt,
     this.isActive = true,
   });
@@ -36,6 +38,7 @@ class UserModel {
       name: (map['name'] as String?)?.trim() ?? 'User',
       phoneNumber: (map['phoneNumber'] as String?)?.trim() ?? '',
       role: UserRole.fromString(map['role'] as String?),
+      photoUrl: map['photoUrl'] as String?,
       createdAt: parsedCreatedAt,
       isActive: map['isActive'] as bool? ?? true,
     );
@@ -48,6 +51,7 @@ class UserModel {
       'name': name,
       'phoneNumber': phoneNumber,
       'role': role.toJson(),
+      'photoUrl': photoUrl,
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive,
     };
@@ -59,6 +63,7 @@ class UserModel {
     String? name,
     String? phoneNumber,
     UserRole? role,
+    String? photoUrl,
     DateTime? createdAt,
     bool? isActive,
   }) {
@@ -67,6 +72,7 @@ class UserModel {
       name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       role: role ?? this.role,
+      photoUrl: photoUrl ?? this.photoUrl,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
     );
@@ -78,5 +84,5 @@ class UserModel {
 
   @override
   String toString() =>
-      'UserModel(uid: $uid, name: $name, phone: $phoneNumber, role: ${role.name}, active: $isActive)';
+      'UserModel(uid: $uid, name: $name, phone: $phoneNumber, role: ${role.name}, photoUrl: $photoUrl, active: $isActive)';
 }

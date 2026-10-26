@@ -22,11 +22,11 @@ class SelectLocationScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Select Service Location',
+              'Pakistan Service Map',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             Text(
-              'Sahiwal to Lahore Corridor Map',
+              'Auto-detects location • Tap pin to confirm',
               style: TextStyle(fontSize: 11, color: Colors.grey),
             ),
           ],

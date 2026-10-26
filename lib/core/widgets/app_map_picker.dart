@@ -6,11 +6,15 @@ import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../widgets/primary_button.dart';
 import '../../models/city_location.dart';
+import '../../services/location_service.dart';
 
-/// Interactive Street-Level Map Picker covering Sahiwal to Lahore corridor.
+/// Interactive Street-Level Map Picker for Pakistan.
+/// Automatically detects device location upon opening, centers on user's coordinates,
+/// and allows fine-tuning with manual pin placement or city corridor selection.
 class AppMapPicker extends StatefulWidget {
   final LatLng? initialLocation;
   final String? initialCityId;
+  final bool autoDetectOnOpen;
   final void Function(LatLng location, String addressDescription)?
   onLocationConfirmed;
 
@@ -18,6 +22,7 @@ class AppMapPicker extends StatefulWidget {
     super.key,
     this.initialLocation,
     this.initialCityId,
+    this.autoDetectOnOpen = true,
     this.onLocationConfirmed,
   });
 
@@ -27,9 +32,12 @@ class AppMapPicker extends StatefulWidget {
 
 class _AppMapPickerState extends State<AppMapPicker> {
   late final MapController _mapController;
+  final LocationService _locationService = LocationService();
   late CityLocation _selectedCity;
   late LatLng _currentPin;
+  LatLng? _detectedGpsCoords;
   String _addressDetails = '';
+  bool _isAutoLocating = false;
 
   @override
   void initState() {
@@ -39,28 +47,69 @@ class _AppMapPickerState extends State<AppMapPicker> {
     if (widget.initialCityId != null) {
       _selectedCity = CorridorCities.findById(widget.initialCityId!);
     } else {
-      _selectedCity = CorridorCities.defaultCity; // Sahiwal
+      _selectedCity = _locationService.selectedCity;
     }
 
-    _currentPin = widget.initialLocation ?? _selectedCity.center;
-    _addressDetails = '${_selectedCity.name}, Main Road / Street';
+    _currentPin =
+        widget.initialLocation ??
+        _locationService.deviceGpsLocation ??
+        _selectedCity.center;
+    _detectedGpsCoords = _locationService.deviceGpsLocation;
+    _addressDetails = _locationService.streetAddress.isNotEmpty
+        ? _locationService.streetAddress
+        : '${_selectedCity.popularAreas.first}, ${_selectedCity.name}';
+
+    if (widget.autoDetectOnOpen && widget.initialLocation == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _detectAndCenterLocation();
+      });
+    }
+  }
+
+  Future<void> _detectAndCenterLocation() async {
+    if (!mounted) return;
+    setState(() => _isAutoLocating = true);
+
+    final success = await _locationService.autoDetectLocation();
+    if (!mounted) return;
+
+    if (success && _locationService.deviceGpsLocation != null) {
+      final gpsPoint = _locationService.deviceGpsLocation!;
+      setState(() {
+        _detectedGpsCoords = gpsPoint;
+        _currentPin = gpsPoint;
+        _selectedCity = _locationService.selectedCity;
+        _addressDetails = _locationService.streetAddress;
+        _isAutoLocating = false;
+      });
+      _mapController.move(gpsPoint, 15.0);
+    } else {
+      setState(() {
+        _isAutoLocating = false;
+      });
+    }
   }
 
   void _onCitySelected(CityLocation city) {
     setState(() {
       _selectedCity = city;
       _currentPin = city.center;
-      _addressDetails = '${city.name}, Central Area';
+      _addressDetails =
+          '${city.popularAreas.isNotEmpty ? city.popularAreas.first : 'Center'}, ${city.name}';
     });
+    _locationService.selectCity(city);
     _mapController.move(city.center, city.defaultZoom);
   }
 
   void _onMapTap(TapPosition tapPosition, LatLng point) {
+    final nearest = CorridorCities.findClosestCity(point);
     setState(() {
       _currentPin = point;
+      _selectedCity = nearest;
       _addressDetails =
-          '${_selectedCity.name} • Lat: ${point.latitude.toStringAsFixed(4)}, Lng: ${point.longitude.toStringAsFixed(4)}';
+          '${nearest.name} • ${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
     });
+    _locationService.setManualPin(point, customAddress: _addressDetails);
   }
 
   void _zoomIn() {
@@ -77,7 +126,7 @@ class _AppMapPickerState extends State<AppMapPicker> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // 1. City Corridor Selector (Sahiwal to Lahore)
+        // 1. Auto-Detection Status & City Corridor Selector
         Container(
           color: AppColors.surface,
           padding: const EdgeInsets.symmetric(
@@ -87,21 +136,68 @@ class _AppMapPickerState extends State<AppMapPicker> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              // Auto-detection status badge
+              Row(
                 children: [
-                  Icon(Icons.route_rounded, size: 18, color: AppColors.primary),
-                  SizedBox(width: 6),
-                  Text(
-                    'Corridor (Sahiwal ➔ Okara ➔ Pattoki ➔ Lahore):',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                  if (_isAutoLocating) ...[
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primary,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Detecting your GPS location in Pakistan...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ] else if (_locationService.isAutoDetected) ...[
+                    const Icon(
+                      Icons.gps_fixed_rounded,
+                      size: 16,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'GPS Location Detected: ${_selectedCity.name}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ] else ...[
+                    const Icon(
+                      Icons.location_city_rounded,
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Select City Corridor or Tap "Auto-Detect":',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),
+
+              // Horizontal City selector chips
               SizedBox(
                 height: 38,
                 child: ListView.separated(
@@ -130,46 +226,54 @@ class _AppMapPickerState extends State<AppMapPicker> {
                   },
                 ),
               ),
-              // Popular Sector / Street chips for selected city
-              const SizedBox(height: 6),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    const Text(
-                      'Popular Areas: ',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    ..._selectedCity.popularAreas.map(
-                      (area) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ActionChip(
-                          labelPadding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                          ),
-                          label: Text(
-                            area,
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _addressDetails = '$area, ${_selectedCity.name}';
-                            });
-                          },
+
+              // Popular Area chips for selected city
+              if (_selectedCity.popularAreas.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Popular Areas: ',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
                         ),
                       ),
-                    ),
-                  ],
+                      ..._selectedCity.popularAreas.map(
+                        (area) => Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: ActionChip(
+                            labelPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                            ),
+                            label: Text(
+                              area,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _addressDetails =
+                                    '$area, ${_selectedCity.name}';
+                              });
+                              _locationService.selectCity(
+                                _selectedCity,
+                                customArea: area,
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
 
-        // 2. Interactive Map View with OpenStreetMap Tiles
+        // 2. Interactive Map View with OpenStreetMap Tiles & GPS Marker
         Expanded(
           child: Stack(
             children: [
@@ -178,7 +282,7 @@ class _AppMapPickerState extends State<AppMapPicker> {
                 options: MapOptions(
                   initialCenter: _currentPin,
                   initialZoom: _selectedCity.defaultZoom,
-                  minZoom: 6.0,
+                  minZoom: 5.0,
                   maxZoom: 18.0,
                   onTap: _onMapTap,
                 ),
@@ -191,22 +295,44 @@ class _AppMapPickerState extends State<AppMapPicker> {
                   ),
                   MarkerLayer(
                     markers: [
+                      // Active Selected Service Pin
                       Marker(
                         point: _currentPin,
                         width: 48,
                         height: 48,
                         child: const Icon(
                           Icons.location_pin,
-                          color: AppColors.error,
+                          color: AppColors.primary,
                           size: 48,
                         ),
                       ),
+                      // If GPS detected, show blue/emerald user dot
+                      if (_detectedGpsCoords != null)
+                        Marker(
+                          point: _detectedGpsCoords!,
+                          width: 24,
+                          height: 24,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.info,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.info.withAlpha(100),
+                                  blurRadius: 8,
+                                  spreadRadius: 3,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],
               ),
 
-              // Zoom In / Out Floating Controls
+              // Zoom Controls & GPS Auto-Locate Button
               Positioned(
                 right: 16,
                 top: 16,
@@ -228,23 +354,30 @@ class _AppMapPickerState extends State<AppMapPicker> {
                       child: const Icon(Icons.remove),
                     ),
                     const SizedBox(height: 8),
-                    FloatingActionButton.small(
-                      heroTag: 'map_reset_center',
-                      backgroundColor: AppColors.surface,
-                      foregroundColor: AppColors.primary,
-                      onPressed: () {
-                        _mapController.move(
-                          _selectedCity.center,
-                          _selectedCity.defaultZoom,
-                        );
-                      },
-                      child: const Icon(Icons.my_location_rounded),
+                    FloatingActionButton(
+                      heroTag: 'map_auto_detect_btn',
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      onPressed: _detectAndCenterLocation,
+                      tooltip: 'Auto-detect location in Pakistan',
+                      child: _isAutoLocating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Icon(Icons.my_location_rounded),
                     ),
                   ],
                 ),
               ),
 
-              // Help badge
+              // Map instruction badge
               Positioned(
                 left: 16,
                 top: 16,
@@ -268,7 +401,7 @@ class _AppMapPickerState extends State<AppMapPicker> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        'Tap on map to set street pin',
+                        'Tap map to fine-tune pin',
                         style: TextStyle(color: Colors.white, fontSize: 11),
                       ),
                     ],
@@ -305,13 +438,27 @@ class _AppMapPickerState extends State<AppMapPicker> {
                     ),
                     const SizedBox(width: AppConstants.spaceS),
                     Expanded(
-                      child: Text(
-                        _addressDetails,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _addressDetails,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          if (_locationService.isAutoDetected)
+                            const Text(
+                              '✓ Auto-detected via GPS',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ],

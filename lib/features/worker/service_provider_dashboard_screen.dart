@@ -891,14 +891,20 @@ class _ProviderProfileSettingsTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 36,
                 backgroundColor: AppColors.secondary,
-                child: Icon(
-                  Icons.handyman_rounded,
-                  size: 36,
-                  color: Colors.white,
-                ),
+                backgroundImage:
+                    user?.photoUrl != null && user!.photoUrl!.isNotEmpty
+                    ? NetworkImage(user.photoUrl!)
+                    : null,
+                child: user?.photoUrl == null || user!.photoUrl!.isEmpty
+                    ? const Icon(
+                        Icons.handyman_rounded,
+                        size: 36,
+                        color: Colors.white,
+                      )
+                    : null,
               ),
               const SizedBox(width: AppConstants.spaceM),
               Expanded(
@@ -946,6 +952,14 @@ class _ProviderProfileSettingsTab extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppConstants.spaceM),
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.profile);
+            },
+            icon: const Icon(Icons.edit_note_rounded, size: 18),
+            label: const Text('Edit Profile Details (Name & Photo)'),
+          ),
           const SizedBox(height: AppConstants.spaceL),
           const Divider(),
 
@@ -988,11 +1002,42 @@ class _ProviderProfileSettingsTab extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(
+              Icons.verified_user_outlined,
+              color: AppColors.secondary,
+            ),
+            title: const Text('Application / Verification Status'),
+            subtitle: const Text('Check your document review status'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.pushNamed(context, AppRoutes.workerApplicationStatus);
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.notifications_outlined,
+              color: AppColors.secondary,
+            ),
+            title: const Text('Notifications'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () =>
+                Navigator.pushNamed(context, AppRoutes.notifications),
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.help_outline_rounded,
+              color: AppColors.secondary,
+            ),
+            title: const Text('Help Center & Support'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.helpCenter),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(
               Icons.swap_horiz_rounded,
               color: AppColors.primary,
             ),
-            title: const Text('Switch to Customer Mode'),
-            subtitle: const Text('Book other trades and services'),
+            title: const Text('Switch to Customer Mode'),            subtitle: const Text('Book other trades and services'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () async {
               if (authNotifier != null) {

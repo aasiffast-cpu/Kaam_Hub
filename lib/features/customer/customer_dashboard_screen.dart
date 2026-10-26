@@ -5,9 +5,12 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/widgets/app_map_picker.dart';
+import '../../models/service_request_model.dart';
 import '../../models/user_role.dart';
 import '../../models/worker_model.dart';
 import '../../services/auth_notifier.dart';
+import '../../services/location_service.dart';
+import '../../services/mock_request_service.dart';
 import '../../services/mock_worker_service.dart';
 
 /// Full Customer Dashboard widget featuring bottom navigation with 4 tabs:
@@ -46,7 +49,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         index: _currentTabIndex,
         children: [
           _CustomerExploreTab(authNotifier: widget.authNotifier),
-          const _CustomerBookingsTab(),
+          _CustomerBookingsTab(authNotifier: widget.authNotifier),
           const _CustomerMapTab(),
           _CustomerAccountTab(authNotifier: widget.authNotifier),
         ],
@@ -102,10 +105,11 @@ class _CustomerExploreTab extends StatefulWidget {
 
 class _CustomerExploreTabState extends State<_CustomerExploreTab> {
   final MockWorkerService _workerService = MockWorkerService();
+  final LocationService _locationService = LocationService();
   final TextEditingController _searchController = TextEditingController();
 
   int _selectedCategoryIndex = 0;
-  String _currentServiceArea = 'Farid Town, Sahiwal';
+  late String _currentServiceArea;
   String _searchQuery = '';
 
   List<WorkerModel> _allWorkers = [];
@@ -148,6 +152,9 @@ class _CustomerExploreTabState extends State<_CustomerExploreTab> {
   void initState() {
     super.initState();
     _fetchWorkers();
+    _currentServiceArea = _locationService.streetAddress;
+    _locationService.addListener(_onLocationUpdated);
+    _locationService.autoDetectLocation(requestIfDenied: false);
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.trim().toLowerCase();
@@ -155,8 +162,17 @@ class _CustomerExploreTabState extends State<_CustomerExploreTab> {
     });
   }
 
+  void _onLocationUpdated() {
+    if (mounted) {
+      setState(() {
+        _currentServiceArea = _locationService.streetAddress;
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _locationService.removeListener(_onLocationUpdated);
     _searchController.dispose();
     super.dispose();
   }
@@ -305,7 +321,7 @@ class _CustomerExploreTabState extends State<_CustomerExploreTab> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(
-                          Icons.map_rounded,
+                          Icons.my_location_rounded,
                           color: Colors.white,
                           size: 20,
                         ),
@@ -315,8 +331,7 @@ class _CustomerExploreTabState extends State<_CustomerExploreTab> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Service Location (Sahiwal ➔ Lahore)',
+                            Text(_locationService.isAutoDetected ? 'Auto-Detected GPS Location (Pakistan)' : 'Service Location (Tap to change on Map)',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -749,205 +764,305 @@ class _CustomerExploreTabState extends State<_CustomerExploreTab> {
 }
 
 // -------------------------------------------------------------
-// TAB 2: Customer Bookings & Order History
+// TAB 2: Customer Bookings & Order History (live data)
 // -------------------------------------------------------------
-class _CustomerBookingsTab extends StatelessWidget {
-  const _CustomerBookingsTab();
+class _CustomerBookingsTab extends StatefulWidget {
+  final AuthNotifier? authNotifier;
+  const _CustomerBookingsTab({this.authNotifier});
+
+  @override
+  State<_CustomerBookingsTab> createState() => _CustomerBookingsTabState();
+}
+
+class _CustomerBookingsTabState extends State<_CustomerBookingsTab> {
+  final MockRequestService _requestService = MockRequestService();
+  List<ServiceRequestModel> _requests = [];
+  bool _isLoading = true;
+
+  String get _userId =>
+      widget.authNotifier?.currentUser?.uid ?? 'customer_demo_001';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRequests();
+  }
+
+  Future<void> _loadRequests() async {
+    setState(() => _isLoading = true);
+    final reqs = await _requestService.getRequestsForCustomer(_userId);
+    if (mounted) {
+      setState(() {
+        _requests = reqs;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final active =
+        _requests.where((r) => r.status.isActive).toList();
+    final completed = _requests
+        .where((r) => r.status == ServiceRequestStatus.completed)
+        .toList();
+    final others = _requests
+        .where((r) =>
+            r.status == ServiceRequestStatus.cancelled ||
+            r.status == ServiceRequestStatus.disputed)
+        .toList();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('My Bookings & Orders')),
-      body: ListView(
-        padding: AppConstants.paddingScreen,
-        children: [
-          // Active Booking Card
-          const Text(
-            'Active Service Request',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+      appBar: AppBar(
+        title: const Text('My Bookings & Orders'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _loadRequests,
           ),
-          const SizedBox(height: AppConstants.spaceS),
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusM),
-              side: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(AppConstants.spaceM),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await Navigator.pushNamed(context, AppRoutes.createRequest,
+              arguments: <String, dynamic>{});
+          _loadRequests();
+        },
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('New Request'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadRequests,
+              child: _requests.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.bolt_rounded, color: AppColors.primary),
-                          SizedBox(width: 6),
-                          Text(
-                            'UPS & Wiring Repair',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
+                          const Icon(Icons.work_outline_rounded,
+                              size: 56, color: AppColors.textMuted),
+                          const SizedBox(height: 16),
+                          const Text('No service requests yet',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Tap the button below to create your first service request.',
+                            textAlign: TextAlign.center,
+                            style:
+                                TextStyle(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              await Navigator.pushNamed(
+                                  context, AppRoutes.createRequest,
+                                  arguments: <String, dynamic>{});
+                              _loadRequests();
+                            },
+                            icon: const Icon(Icons.add_rounded),
+                            label: const Text('Create Service Request'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
                             ),
                           ),
                         ],
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.badgeApprovedBg,
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.radiusFull,
-                          ),
-                        ),
-                        child: const Text(
-                          'ON THE WAY',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.badgeApprovedText,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Assigned Provider: Rashid Ali (Electrician • Verified & Police Cleared)',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
+                    )
+                  : ListView(
+                      padding: AppConstants.paddingScreen,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        if (active.isNotEmpty) ...[
+                          _SectionHeader(
+                              title: 'Active Requests (${active.length})'),
+                          ...active.map((r) => _RequestCard(
+                              request: r,
+                              onTap: () async {
+                                await Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.requestDetail,
+                                  arguments: {
+                                    'requestId': r.id,
+                                    'isWorkerView': false,
+                                  },
+                                );
+                                _loadRequests();
+                              })),
+                          const SizedBox(height: AppConstants.spaceM),
+                        ],
+                        if (completed.isNotEmpty) ...[
+                          _SectionHeader(
+                              title:
+                                  'Completed (${completed.length})'),
+                          ...completed.map((r) => _RequestCard(
+                              request: r,
+                              onTap: () async {
+                                await Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.requestDetail,
+                                  arguments: {
+                                    'requestId': r.id,
+                                    'isWorkerView': false,
+                                  },
+                                );
+                                _loadRequests();
+                              })),
+                          const SizedBox(height: AppConstants.spaceM),
+                        ],
+                        if (others.isNotEmpty) ...[
+                          _SectionHeader(
+                              title: 'Cancelled / Disputed'),
+                          ...others.map((r) => _RequestCard(
+                              request: r,
+                              onTap: () => Navigator.pushNamed(
+                                    context,
+                                    AppRoutes.requestDetail,
+                                    arguments: {
+                                      'requestId': r.id,
+                                      'isWorkerView': false,
+                                    },
+                                  ))),
+                        ],
+                        const SizedBox(height: 80),
+                      ],
                     ),
-                  ),
+            ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppConstants.spaceS),
+      child: Text(title,
+          style: const TextStyle(
+              fontSize: 15, fontWeight: FontWeight.w800)),
+    );
+  }
+}
+
+class _RequestCard extends StatelessWidget {
+  final ServiceRequestModel request;
+  final VoidCallback onTap;
+
+  const _RequestCard({required this.request, required this.onTap});
+
+  Color get _statusColor {
+    switch (request.status) {
+      case ServiceRequestStatus.completed:
+        return AppColors.success;
+      case ServiceRequestStatus.cancelled:
+        return AppColors.error;
+      case ServiceRequestStatus.disputed:
+        return AppColors.warning;
+      case ServiceRequestStatus.inProgress:
+        return AppColors.info;
+      case ServiceRequestStatus.accepted:
+        return AppColors.secondary;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          side: BorderSide(color: _statusColor.withAlpha(60), width: 1.2),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.spaceM),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(request.serviceCategory,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w800)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _statusColor.withAlpha(20),
+                        borderRadius: BorderRadius.circular(
+                            AppConstants.radiusFull),
+                      ),
+                      child: Text(request.status.displayName,
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _statusColor)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(request.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_rounded,
+                        size: 13, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(request.serviceAddress,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary)),
+                    ),
+                  ],
+                ),
+                if (request.workerName != null) ...[
                   const SizedBox(height: 4),
-                  const Text(
-                    'Address: House 24, Street 3, Farid Town, Sahiwal',
-                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-                  ),
-                  const SizedBox(height: AppConstants.spaceM),
                   Row(
                     children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Calling Rashid Ali (+92 300 7654321)...',
-                                ),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.call, size: 16),
-                          label: const Text('Call Worker'),
-                        ),
-                      ),
-                      const SizedBox(width: AppConstants.spaceM),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            Navigator.pushNamed(context, AppRoutes.mapLocation);
-                          },
-                          icon: const Icon(Icons.map_rounded, size: 16),
-                          label: const Text('Track on Map'),
-                        ),
-                      ),
+                      const Icon(Icons.engineering_rounded,
+                          size: 13, color: AppColors.secondary),
+                      const SizedBox(width: 4),
+                      Text(request.workerName!,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary)),
                     ],
                   ),
                 ],
-              ),
+                if (request.quotedAmount != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Rs. ${request.quotedAmount!.toInt()}',
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary),
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: AppConstants.spaceL),
-
-          // Completed Past Bookings
-          const Text(
-            'Past Completed Services',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: AppConstants.spaceS),
-          _buildPastBookingTile(
-            serviceName: 'Tap Leakage & Tank Inspection',
-            providerName: 'Muhammad Usman (Plumber)',
-            date: '10 Oct 2026',
-            cost: 'Rs. 1,000',
-            rating: '5 ★',
-          ),
-          const SizedBox(height: AppConstants.spaceS),
-          _buildPastBookingTile(
-            serviceName: 'Car Wash & Interior Polish',
-            providerName: 'Hamza Bilal (Car Washer)',
-            date: '28 Sep 2026',
-            cost: 'Rs. 900',
-            rating: '4.8 ★',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPastBookingTile({
-    required String serviceName,
-    required String providerName,
-    required String date,
-    required String cost,
-    required String rating,
-  }) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        side: const BorderSide(color: AppColors.cardBorder),
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.success.withAlpha(20),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.check_circle_rounded,
-            color: AppColors.success,
-          ),
-        ),
-        title: Text(
-          serviceName,
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-        ),
-        subtitle: Text(
-          '$providerName • $date',
-          style: const TextStyle(fontSize: 12),
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              cost,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary,
-              ),
-            ),
-            Text(
-              rating,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.accent,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -964,9 +1079,7 @@ class _CustomerMapTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Corridor Live Map Explorer')),
-      body: const AppMapPicker(
-        initialCityId: 'sahiwal',
-      ),
+      body: const AppMapPicker(autoDetectOnOpen: true),
     );
   }
 }
@@ -990,10 +1103,16 @@ class _CustomerAccountTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 36,
                 backgroundColor: AppColors.primary,
-                child: Icon(Icons.person, size: 40, color: Colors.white),
+                backgroundImage:
+                    user?.photoUrl != null && user!.photoUrl!.isNotEmpty
+                    ? NetworkImage(user.photoUrl!)
+                    : null,
+                child: user?.photoUrl == null || user!.photoUrl!.isEmpty
+                    ? const Icon(Icons.person, size: 40, color: Colors.white)
+                    : null,
               ),
               const SizedBox(width: AppConstants.spaceM),
               Expanded(
@@ -1041,14 +1160,38 @@ class _CustomerAccountTab extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppConstants.spaceM),
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.profile);
+            },
+            icon: const Icon(Icons.edit_note_rounded, size: 18),
+            label: const Text('Edit Profile Details'),
+          ),
           const SizedBox(height: AppConstants.spaceL),
           const Divider(),
+          ListTile(
+            leading: const Icon(Icons.chat_bubble_outline_rounded,
+                color: AppColors.primary),
+            title: const Text('Messages'),
+            subtitle: const Text('Chat with service providers'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.chatList),
+          ),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined,
+                color: AppColors.primary),
+            title: const Text('Notifications'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () =>
+                Navigator.pushNamed(context, AppRoutes.notifications),
+          ),
           ListTile(
             leading: const Icon(
               Icons.location_on_outlined,
               color: AppColors.primary,
             ),
-            title: const Text('Saved Corridor Addresses'),
+            title: const Text('Saved Addresses'),
             subtitle: const Text('Farid Town Sahiwal, Gulberg Lahore'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
@@ -1056,24 +1199,21 @@ class _CustomerAccountTab extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(
-              Icons.payment_outlined,
-              color: AppColors.primary,
-            ),
-            title: const Text('Payment Methods'),
-            subtitle: const Text('Cash on Delivery, JazzCash, Easypaisa'),
+            leading: const Icon(Icons.help_outline_rounded,
+                color: AppColors.primary),
+            title: const Text('Help Center & Support'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, AppRoutes.helpCenter),
           ),
           ListTile(
             leading: const Icon(
               Icons.security_outlined,
               color: AppColors.primary,
             ),
-            title: const Text('Safety & Police Verification Guarantee'),
+            title: const Text('Safety & Verification Info'),
             subtitle: const Text('Punjab Police Khidmat Markaz Checked'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, AppRoutes.helpCenter),
           ),
           ListTile(
             leading: const Icon(
@@ -1123,3 +1263,4 @@ class _CustomerAccountTab extends StatelessWidget {
     );
   }
 }
+
