@@ -43,6 +43,8 @@
       align-items: center;
       background: linear-gradient(180deg, #0F5132 0%, #0A3622 100%);
       z-index: 99999;
+      transition: opacity 0.4s ease-out;
+      pointer-events: none;
     }
 
     .loader-wrapper {
@@ -62,7 +64,7 @@
       border-radius: 50%;
       border: 3.5px solid transparent;
       border-top-color: #ffffff;
-      border-right-color: rgba(255, 255, 255, 0.4);
+      border-right-color: rgba(255, 255, 255, 0.45);
       animation: spin-clockwise 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     }
 
@@ -154,6 +156,30 @@
     <div class="loading-text">KaamHub • کام ہب</div>
     <div class="loading-subtext">لوڈ ہو رہا ہے... براہِ کرم انتظار فرمائیں</div>
   </div>
+
+  <script>
+    // Smoothly remove preloader as soon as Flutter attaches to the DOM
+    function hidePreloader() {
+      const loader = document.getElementById('loading-container');
+      if (loader && loader.style.opacity !== '0') {
+        loader.style.opacity = '0';
+        setTimeout(function() {
+          if (loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 400);
+      }
+    }
+
+    const observer = new MutationObserver(function(mutations) {
+      if (document.querySelector('flutter-view') || document.querySelector('flt-glass-pane')) {
+        hidePreloader();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Fallback: Max 3.5s timeout ensures loader never hangs
+    setTimeout(hidePreloader, 3500);
+  </script>
 
   <script src="flutter_bootstrap.js" async></script>
 </body>
