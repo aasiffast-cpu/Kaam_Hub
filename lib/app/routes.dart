@@ -20,6 +20,7 @@ import '../features/customer/request_detail_screen.dart';
 import '../features/customer/review_screen.dart';
 import '../features/customer/select_location_screen.dart';
 import '../features/customer/worker_profile_screen.dart';
+import '../features/onboarding/onboarding_screen.dart';
 import '../features/shared/help_center_screen.dart';
 import '../features/shared/notifications_screen.dart';
 import '../features/shared/report_screen.dart';
@@ -38,6 +39,7 @@ class AppRoutes {
   // ── Core ─────────────────────────────────────────────────────────────────
   static const String splash = '/splash';
   static const String initial = '/';
+  static const String onboarding = '/onboarding';
   static const String roleSelection = '/role_selection';
 
   // ── Auth ─────────────────────────────────────────────────────────────────
@@ -86,6 +88,13 @@ class AppRoutes {
       case splash:
         return MaterialPageRoute(
           builder: (_) => SplashScreen(authNotifier: authNotifier),
+          settings: settings,
+        );
+
+      // Onboarding Walkthrough
+      case onboarding:
+        return MaterialPageRoute(
+          builder: (_) => OnboardingScreen(authNotifier: authNotifier),
           settings: settings,
         );
 

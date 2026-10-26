@@ -4,6 +4,7 @@ import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/widgets/download_app_dialog.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../models/user_role.dart';
 import '../../services/auth_notifier.dart';
@@ -25,18 +26,55 @@ class RoleSelectionScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: AppConstants.spaceM),
-              // App Branding
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'KaamHub',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => DownloadAppDialog.show(context),
+                    icon: const Icon(Icons.download_rounded,
+                        color: AppColors.primary, size: 18),
+                    label: const Text(
+                      'Download App',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              // Circular App Branding
               Center(
                 child: Container(
-                  height: 64,
-                  width: 200,
+                  height: 90,
+                  width: 90,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: AppColors.primary, width: 2.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withAlpha(30),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Image.asset(
-                    'assets/images/kaamhub_logo.png',
-                    fit: BoxFit.contain,
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/kaamhub_logo_circular.png',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),

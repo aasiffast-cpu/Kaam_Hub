@@ -1,11 +1,11 @@
 {
-    "name": "kaamhub",
-    "short_name": "kaamhub",
+    "name": "KaamHub - Local Services Pakistan",
+    "short_name": "KaamHub",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F5132",
+    "theme_color": "#0F5132",
+    "description": "Verified Local Service Experts in Pakistan. Plumbers, Electricians, Carpenters & Home Services.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

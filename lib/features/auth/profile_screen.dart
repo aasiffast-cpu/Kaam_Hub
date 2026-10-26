@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:image_picker/image_picker.dart';
+
 import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../models/user_role.dart';
 import '../../services/auth_notifier.dart';
+import '../../services/image_picker_service.dart';
 import '../../services/mock_worker_service.dart';
 
 /// User Profile screen with full Name editing and Profile Photo update capabilities.
@@ -136,9 +139,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Capture live front portrait',
                     style: TextStyle(fontSize: 12),
                   ),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(ctx);
-                    _saveProfileChanges(photoUrl: _avatarPresets.first['url']);
+                    final dataUrl = await ImagePickerService.pickImage(
+                      source: ImageSource.camera,
+                    );
+                    if (dataUrl != null) {
+                      _saveProfileChanges(photoUrl: dataUrl);
+                    }
                   },
                 ),
                 ListTile(
@@ -161,9 +169,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Select from phone or PC photos',
                     style: TextStyle(fontSize: 12),
                   ),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(ctx);
-                    _saveProfileChanges(photoUrl: _avatarPresets[1]['url']);
+                    final dataUrl = await ImagePickerService.pickImage(
+                      source: ImageSource.gallery,
+                    );
+                    if (dataUrl != null) {
+                      _saveProfileChanges(photoUrl: dataUrl);
+                    }
                   },
                 ),
               ],

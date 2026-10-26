@@ -75,8 +75,8 @@ class _SplashScreenState extends State<SplashScreen>
           break;
       }
     } else {
-      // Not logged in — show role selection / login
-      Navigator.pushReplacementNamed(context, AppRoutes.roleSelection);
+      // Not logged in — start with onboarding walkthrough (Next, Next, Next)
+      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
     }
   }
 
@@ -94,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen>
             children: [
               const Spacer(flex: 2),
 
-              // Animated KaamHub Brand Mark
+              // Animated KaamHub Circular Brand Mark
               FadeTransition(
                 opacity: _fadeAnim,
                 child: ScaleTransition(
@@ -102,11 +102,12 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     children: [
                       Container(
-                        width: 160,
-                        height: 60,
+                        width: 120,
+                        height: 120,
                         decoration: BoxDecoration(
+                          shape: BoxShape.circle,
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white, width: 3),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withAlpha(50),
@@ -115,11 +116,10 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                           ],
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
+                        child: ClipOval(
                           child: Image.asset(
-                            'assets/images/kaamhub_logo.png',
-                            fit: BoxFit.contain,
+                            'assets/images/kaamhub_logo_circular.png',
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),

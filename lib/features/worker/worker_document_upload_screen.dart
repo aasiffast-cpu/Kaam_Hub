@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:image_picker/image_picker.dart';
+
 import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../models/worker_model.dart';
 import '../../services/auth_notifier.dart';
+import '../../services/image_picker_service.dart';
 import '../../services/mock_worker_service.dart';
 
 /// Compulsory Document Upload Screen for Service Workers.
@@ -183,9 +186,14 @@ class _WorkerDocumentUploadScreenState
                     'Capture document front and corners clearly',
                     style: TextStyle(fontSize: 12),
                   ),
-                  onTap: () {
-                    _setDocumentUrl(docKey, defaultPreset);
+                  onTap: () async {
                     Navigator.pop(ctx);
+                    final dataUrl = await ImagePickerService.pickImage(
+                      source: ImageSource.camera,
+                    );
+                    if (dataUrl != null) {
+                      _setDocumentUrl(docKey, dataUrl);
+                    }
                   },
                 ),
 
@@ -210,9 +218,14 @@ class _WorkerDocumentUploadScreenState
                     'JPG, PNG or PDF format (max 5MB)',
                     style: TextStyle(fontSize: 12),
                   ),
-                  onTap: () {
-                    _setDocumentUrl(docKey, defaultPreset);
+                  onTap: () async {
                     Navigator.pop(ctx);
+                    final dataUrl = await ImagePickerService.pickImage(
+                      source: ImageSource.gallery,
+                    );
+                    if (dataUrl != null) {
+                      _setDocumentUrl(docKey, dataUrl);
+                    }
                   },
                 ),
                 const SizedBox(height: 12),

@@ -39,6 +39,7 @@ dependencies:
   geolocator: ^14.1.2
   firebase_core: ^3.6.0
   cloud_firestore: ^5.4.0
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -99,3 +100,4 @@ flutter:
 
   assets:
     - assets/images/kaamhub_logo.png
+    - assets/images/kaamhub_logo_circular.png

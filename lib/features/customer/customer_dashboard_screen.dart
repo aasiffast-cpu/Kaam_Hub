@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/widgets/app_map_picker.dart';
+import '../../core/widgets/download_app_dialog.dart';
 import '../../models/service_request_model.dart';
 import '../../models/user_role.dart';
 import '../../models/worker_model.dart';
@@ -245,8 +246,7 @@ class _CustomerExploreTabState extends State<_CustomerExploreTab> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle_outlined),
+          IconButton(icon: const Icon(Icons.download_for_offline_rounded, color: AppColors.primary), tooltip: 'Download App', onPressed: () => DownloadAppDialog.show(context)), IconButton(icon: const Icon(Icons.account_circle_outlined),
             tooltip: 'Account Profile',
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.profile);
@@ -1263,4 +1263,6 @@ class _CustomerAccountTab extends StatelessWidget {
     );
   }
 }
+
+
 
