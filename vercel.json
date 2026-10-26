@@ -1,34 +1,10 @@
 {
-  "version": 2,
-  "name": "kaamhub",
-  "builds": [
+  "outputDirectory": "build/web",
+  "cleanUrls": true,
+  "rewrites": [
     {
-      "src": "build/web/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/assets/(.*)",
-      "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*\\.js)",
-      "headers": { "Cache-Control": "public, max-age=31536000, immutable" },
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*\\.wasm)",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "Content-Type": "application/wasm"
-      },
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
