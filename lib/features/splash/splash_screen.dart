@@ -6,6 +6,7 @@ import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/localization/app_locale_notifier.dart';
+import '../../core/widgets/three_layer_circular_loader.dart';
 import '../../models/user_role.dart';
 import '../../services/auth_notifier.dart';
 
@@ -101,29 +102,14 @@ class _SplashScreenState extends State<SplashScreen>
                   scale: _scaleAnim,
                   child: Column(
                     children: [
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(color: Colors.white, width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(50),
-                              blurRadius: 24,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/kaamhub_logo_circular.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                      const ThreeLayerCircularLoader(
+                        size: 150,
+                        showLogo: true,
+                        outerColor: Colors.white,
+                        middleColor: AppColors.accent,
+                        innerColor: AppColors.primaryLight,
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 20),
                       Text(
                         isUrdu
                             ? 'قابل بھروسہ گھریلو خدمات — پاکستان'
